@@ -17,7 +17,7 @@ chmod +x config_vhost_fedora.sh
 ## 🔧 Usage
 
 ```bash
-sudo ./config_vhost_fedora.sh --project PROJECT --tld TLD --pubdir DIRECTORY
+sudo ./config_vhost_fedora.sh --project PROJECT --tld TLD --rootdir DIRECTORY
 ```
 
 | Option | Description | Default Value |
