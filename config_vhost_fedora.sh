@@ -8,7 +8,7 @@ ROOTDIR="/var/www"
 
 function usage() {
     echo ""
-    echo "Usage : sudo $0 --project PROJECT --tld TLD --pubdir DIRECTORY --composer"
+    echo "Usage : sudo $0 --project PROJECT --tld TLD --pubdir DIRECTORY"
     echo " --project    Project name"
     echo " --tld        TLD of project (if not specified : $DOMAIN)"
     echo " --rootdir    Path of root directory (if not specified : $ROOTDIR)"
