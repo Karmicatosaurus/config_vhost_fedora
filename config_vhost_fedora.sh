@@ -4,7 +4,7 @@ set -e
 
 PROJECT=""
 TLD="local"
-ROOTDIR="/var/www"
+ROOT_DIR="/var/www"
 
 function usage() {
     echo ""
@@ -62,10 +62,10 @@ while [[ "$#" -gt 0 ]]; do
         shift 2
         ;;
     --rootdir)
-        ROOTDIR="$2"
+        ROOT_DIR="$2"
         ;;
     *)
-      echo "Option unknow : $1"
+      message "error" "Option unknow : $1"
       exit 1
       ;;
     esac
@@ -75,15 +75,15 @@ if [[ -z "$PROJECT" ]]; then
   usage
 fi
 
-ROOTDIR="${ROOTDIR%/}"
+ROOT_DIR="${ROOT_DIR%/}"
 TLD="${TLD/#./}"
 
 DOMAIN="$PROJECT.$TLD"
-PUBDIR="$ROOTDIR/$PROJECT"
+PUB_DIR="$ROOT_DIR/$PROJECT"
 USER="$SUDO_USER"
 
 CONF_HTTP="/etc/httpd/conf.d/$PROJECT.conf"
-CONF_SSL="/etc/httpd/conf.d/$PROJECT-ssl.conf"
+CONF_HTTPS="/etc/httpd/conf.d/$PROJECT-ssl.conf"
 SSL_DIR="/etc/httpd/ssl"
 CRT="$SSL_DIR/$DOMAIN.crt"
 KEY="$SSL_DIR/$DOMAIN.key"
@@ -92,14 +92,14 @@ if httpd -S 2>/dev/null | grep -q "namevhost $DOMAIN"; then
     message "error" "The project already exist"
 fi
 
-if [[ -d "$PUBDIR" ]]; then
+if [[ -d "$PUB_DIR" ]]; then
     message "error" "The directory already exist"
 fi
 
 message "info" "Creating directory"
-mkdir -p "$PUBDIR"
-chown -Rf "$USER":apache "$PUBDIR"
-chcon -Rt httpd_sys_rw_content_t "$PUBDIR"
+mkdir -p "$PUB_DIR"
+chown -Rf "$USER":apache "$PUB_DIR"
+chcon -Rt httpd_sys_rw_content_t "$PUB_DIR"
 message "ok" "Directory created"
 
 message "info" "Creating SSL"
@@ -122,16 +122,16 @@ tee "$CONF_HTTP" > /dev/null <<EOF
 </VirtualHost>
 EOF
 
-tee "$CONF_SSL" > /dev/null <<EOF
+tee "$CONF_HTTPS" > /dev/null <<EOF
 <VirtualHost *:443>
     ServerName $DOMAIN
-    DocumentRoot $PUBDIR
+    DocumentRoot $PUB_DIR
 
     SSLEngine on
     SSLCertificateFile $CRT
     SSLCertificateKeyFile $KEY
 
-    <Directory $PUBDIR>
+    <Directory $PUB_DIR>
         AllowOverride All
         Require all granted
     </Directory>
@@ -153,7 +153,7 @@ message "ok" "Apache server restarted"
 
 echo "------------------------------------------"
 echo -e "\n\033[32mProject \"$PROJECT\" created with success !\033[0m"
-echo "Directory : $PUBDIR"
+echo "Directory : $PUB_DIR"
 echo "HTTP access : http://$DOMAIN"
 echo "HTTPS access : https://$DOMAIN"
 echo "HTTP → HTTPS redirection enabled"
