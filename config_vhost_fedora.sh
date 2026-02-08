@@ -63,6 +63,7 @@ while [[ "$#" -gt 0 ]]; do
         ;;
     --rootdir)
         ROOT_DIR="$2"
+        shift 2        
         ;;
     *)
       message "error" "Option unknow : $1"
