@@ -5,7 +5,7 @@
 - **Operating System**: Fedora
 - **Apache**: Installed and running (`sudo dnf install httpd`).
 - **Permissions**: The script must be executed with `sudo` or as the `root` user.
-- Whiptail (for TUI)
+- **Whiptail** (for TUI)
 
 ## 🚀 Installation
 
