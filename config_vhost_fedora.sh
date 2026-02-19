@@ -2,160 +2,139 @@
 
 set -e
 
-PROJECT=""
-TLD="local"
-ROOT_DIR="/var/www"
-
-function usage() {
-    echo ""
-    echo "Usage : sudo $0 --project PROJECT --tld TLD --rootdir DIRECTORY"
-    echo " --project    Project name"
-    echo " --tld        TLD of project (if not specified : $DOMAIN)"
-    echo " --rootdir    Path of root directory (if not specified : $ROOTDIR)"
-    echo ""
-    echo "Please note that this script must be run with sudo."
-    echo ""
+function message() {
+    whiptail --title "Config VHOST" --msgbox "$1" 8 40
     exit 1
 }
 
-function message() {
-    case "$1" in
-        "info")
-            echo "[INFO] $2"
-            shift 2
-            ;;
-        "ok")
-            printf "\033[32m[OK] $2 !\033[0m\n"
-            shift 2
-            ;;
-        "error")
-            printf "\033[31m[ERROR] $2 !\033[0m\n"
-            exit 1
-            ;;
-        *)
-            echo "Option unknow : $1"
-            exit 1
-            ;;
-    esac    
-}
-
-if [ -z "$1" ]; then
-  usage
-fi
-
-if [[ $EUID -ne 0 ]]; then
-    message "error" "This script must be run with sudo"
-fi
-
-if ! grep -q "^ID=fedora$" /etc/os-release; then
-    message "error" "This distribution is not Fedora"
-fi
-
-while [[ "$#" -gt 0 ]]; do
-  case "$1" in
-    --project)
-        PROJECT="$2"
-        shift 2
-        ;;
-    --tld)
-        TLD="$2"
-        shift 2
-        ;;
-    --rootdir)
-        ROOT_DIR="$2"
-        shift 2        
-        ;;
-    *)
-      message "error" "Option unknow : $1"
-      exit 1
-      ;;
-    esac
-done
-
-if [[ -z "$PROJECT" ]]; then
-  usage
-fi
-
-ROOT_DIR="${ROOT_DIR%/}"
-TLD="${TLD/#./}"
-
-DOMAIN="$PROJECT.$TLD"
-PUB_DIR="$ROOT_DIR/$PROJECT"
+AJOUT=false
+SUPPRIME=false
 USER="$SUDO_USER"
-
-CONF_HTTP="/etc/httpd/conf.d/$PROJECT.conf"
-CONF_HTTPS="/etc/httpd/conf.d/$PROJECT-ssl.conf"
 SSL_DIR="/etc/httpd/ssl"
-CRT="$SSL_DIR/$DOMAIN.crt"
-KEY="$SSL_DIR/$DOMAIN.key"
 
-if httpd -S 2>/dev/null | grep -q "namevhost $DOMAIN"; then
-    message "error" "The project already exist"
-fi
+CHOIX=$(whiptail --title "Config VHOST" --menu "Que voulez vous faire ?" 12 40 5 "ajout" "Ajouter un projet" "supprime" "Supprimer un projet" 3>&1 1>&2 2>&3)
 
-if [[ -d "$PUB_DIR" ]]; then
-    message "error" "The directory already exist"
-fi
+case "$CHOIX" in
+    "ajout")
+        AJOUT=true
+        ;;
+    "supprime")
+        SUPPRIME=true
+        ;;
+esac 
 
-message "info" "Creating directory"
-mkdir -p "$PUB_DIR"
-chown -Rf "$USER":apache "$PUB_DIR"
-chcon -Rt httpd_sys_rw_content_t "$PUB_DIR"
-message "ok" "Directory created"
+if [ "$AJOUT" == "true" ]; then
 
-message "info" "Creating SSL"
-if [[ ! -d "$SSL_DIR" ]]; then
-  mkdir -p "$SSL_DIR"
-fi
+    ROOT_DIR="/var/www"
 
-openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$KEY" -out "$CRT" -subj "/CN=$DOMAIN"
+    PROJECT_NAME=$(whiptail --title "Config VHOST" --inputbox "Nom du projet" 8 40 3>&1 1>&2 2>&3)
 
-trust anchor "$CRT"
+    if [[ -z "$PROJECT_NAME" ]]; then
+        message "Il manque le nom du projet"
+    fi
 
-message "ok" "SSL created"
+    PROJECT_TLD=$(whiptail --title "Config VHOST" --inputbox "TLD" 8 40 local 3>&1 1>&2 2>&3)
+    ROOT_DIR=$(whiptail --title "Config VHOST" --inputbox "Dossier de publication" 8 40 $ROOT_DIR 3>&1 1>&2 2>&3)
 
-message "info" "Creating VHOST"
+    ROOT_DIR="${ROOT_DIR%/}"
+    PROJECT_TLD="${PROJECT_TLD/#./}"
 
-tee "$CONF_HTTP" > /dev/null <<EOF
-<VirtualHost *:80>
-    ServerName $DOMAIN
-    Redirect permanent / https://$DOMAIN/
-</VirtualHost>
+    DOMAIN="$PROJECT_NAME.$PROJECT_TLD"
+    PUB_DIR="$ROOT_DIR/$PROJECT_NAME"
+
+    CONF_HTTP="/etc/httpd/conf.d/$PROJECT_NAME.conf"
+    CONF_HTTPS="/etc/httpd/conf.d/$PROJECT_NAME-ssl.conf"
+    CRT="$SSL_DIR/$DOMAIN.crt"
+    KEY="$SSL_DIR/$DOMAIN.key"
+
+    if httpd -S 2>/dev/null | grep -q "namevhost $DOMAIN"; then
+        message "Le projet existe déjà"
+    fi
+
+    if [[ -d "$PUB_DIR" ]]; then
+        message "Le dossier du projet existe déjà"
+    fi
+
+    mkdir -p "$PUB_DIR"
+    chown -Rf "$USER":apache "$PUB_DIR"
+    chcon -Rt httpd_sys_rw_content_t "$PUB_DIR"      
+
+    if [[ ! -d "$SSL_DIR" ]]; then
+    mkdir -p "$SSL_DIR"
+    fi
+
+    openssl req -x509 -nodes -days 365 -newkey rsa:4096 -keyout "$KEY" -out "$CRT" -subj "/CN=$DOMAIN"
+
+    trust anchor "$CRT"
+
+    tee "$CONF_HTTP" > /dev/null <<EOF
+    <VirtualHost *:80>
+        ServerName $DOMAIN
+        Redirect permanent / https://$DOMAIN/
+    </VirtualHost>
 EOF
 
-tee "$CONF_HTTPS" > /dev/null <<EOF
-<VirtualHost *:443>
-    ServerName $DOMAIN
-    DocumentRoot $PUB_DIR
+    tee "$CONF_HTTPS" > /dev/null <<EOF
+    <VirtualHost *:443>
+        ServerName $DOMAIN
+        DocumentRoot $PUB_DIR
 
-    SSLEngine on
-    SSLCertificateFile $CRT
-    SSLCertificateKeyFile $KEY
+        SSLEngine on
+        SSLCertificateFile $CRT
+        SSLCertificateKeyFile $KEY
 
-    <Directory $PUB_DIR>
-        AllowOverride All
-        Require all granted
-    </Directory>
+        <Directory $PUB_DIR>
+            AllowOverride All
+            Require all granted
+        </Directory>
 
-    ErrorLog logs/$PROJECT-ssl-error.log
-    CustomLog logs/$PROJECT-ssl-access.log combined
-</VirtualHost>
+        ErrorLog logs/$PROJECT-ssl-error.log
+        CustomLog logs/$PROJECT-ssl-access.log combined
+    </VirtualHost>
 EOF
 
-message "ok" "VHOST created"
+    echo "127.0.0.1 $DOMAIN" | tee -a /etc/hosts > /dev/null
 
-message "info" "Add project in /etc/hosts"
-echo "127.0.0.1 $DOMAIN" | tee -a /etc/hosts > /dev/null
-message "ok" "Project added in /etc/hosts"
+    systemctl restart httpd
 
-message "info" "Apache server restart"
-systemctl restart httpd
-message "ok" "Apache server restarted"
+    whiptail --title "Config VHOST" --msgbox "Le projet $PROJECT_NAME a bien été créé !
+    Dossier de publication : $PUB_DIR
+    Accés HTTP : http://$DOMAIN
+    Accés HTTPS : https://$DOMAIN
+    Redirection HTTP → HTTPS activée" 11 60    
 
-echo "------------------------------------------"
-echo -e "\n\033[32mProject \"$PROJECT\" created with success !\033[0m"
-echo "Directory : $PUB_DIR"
-echo "HTTP access : http://$DOMAIN"
-echo "HTTPS access : https://$DOMAIN"
-echo "HTTP → HTTPS redirection enabled"
-echo "------------------------------------------"
+elif [ "$SUPPRIME" == "true" ]; then
+   
+    VHOSTS=$(httpd -S 2>/dev/null | grep "namevhost" | grep -v "fe80" | awk '{print $4}' | sort | uniq)
+
+    if [ -z "VHOSTS" ]; then
+        whiptail --title "Erreur" --msgbox "Aucun projet trouvé." 8 45
+        exit 1
+    fi    
+
+    options=()
+    for host in $VHOSTS; do
+        options+=("$host" "")
+    done
+
+    PROJECT_NAME=$(whiptail --title "Menu des Vhosts Apache" \
+                  --menu "Choisissez un domaine à gérer :" 20 60 10 \
+                  "${options[@]}" \
+                  3>&1 1>&2 2>&3)
+
+    if [[ -z "$PROJECT_NAME" ]]; then
+        message "Il manque le nom du projet"
+    fi
+
+    DOMAIN=$(echo "$PROJECT_NAME" | cut -d'.' -f1)
+
+    PUB_DIR=$(cat /etc/httpd/conf.d/${DOMAIN}-ssl.conf | grep DocumentRoot | awk '{print $2}')
+
+    sed -i "/${PROJECT_NAME}/d" /etc/hosts
+    rm -f /etc/httpd/conf.d/${DOMAIN}*
+    rm -f /etc/httpd/ssl/${DOMAIN}*
+    rm -f /etc/pki/ca-trust/source/${DOMAIN}*
+    rm -vRf $PUB_DIR
+
+    message "Le projet ${DOMAIN} a bien été supprimé"
+fi
