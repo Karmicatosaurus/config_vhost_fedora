@@ -1,5 +1,23 @@
 # Setting up a virtual host with Apache on Fedora
 
+### Add Virtualhost
+
+![Menu](http://dev.karmicat.fr/artsys/images/vhost_ajout_menu.png)
+
+![Nom du projet](http://dev.karmicat.fr/artsys/images/vhost_ajout_nom.png)
+
+![TLD du projet](http://dev.karmicat.fr/artsys/images/vhost_ajout_tld.png)
+
+![Dossier du projet](http://dev.karmicat.fr/artsys/images/vhost_ajout_dossier_pub.png)
+
+![Récap création](http://dev.karmicat.fr/artsys/images/vhost_ajout_fin.png)
+
+### Delete Virtualhost
+
+![Choix suppression](http://dev.karmicat.fr/artsys/images/vhost_suppr_choix.png)
+
+![Confirm suppression](http://dev.karmicat.fr/artsys/images/vhost_suppr_fin.png)
+
 ## 📌 Prerequisites
 
 - **Operating System**: Fedora
