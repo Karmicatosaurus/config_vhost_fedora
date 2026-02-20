@@ -117,8 +117,8 @@ elif [ "$SUPPRIME" == "true" ]; then
         options+=("$host" "")
     done
 
-    PROJECT_NAME=$(whiptail --title "Menu des Vhosts Apache" \
-                  --menu "Choisissez un domaine à gérer :" 20 60 10 \
+    PROJECT_NAME=$(whiptail --title "Supprimer un projet" \
+                  --menu "Choisissez le projet à supprimer :" 20 60 10 \
                   "${options[@]}" \
                   3>&1 1>&2 2>&3)
 
