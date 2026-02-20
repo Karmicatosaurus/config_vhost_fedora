@@ -33,7 +33,7 @@ if [ "$AJOUT" == "true" ]; then
         message "Il manque le nom du projet"
     fi
 
-    PROJECT_TLD=$(whiptail --title "Config VHOST" --inputbox "TLD" 8 40 local 3>&1 1>&2 2>&3)
+    PROJECT_TLD=$(whiptail --title "Config VHOST" --inputbox "TLD du projet" 8 40 local 3>&1 1>&2 2>&3)
     ROOT_DIR=$(whiptail --title "Config VHOST" --inputbox "Dossier de publication" 8 40 $ROOT_DIR 3>&1 1>&2 2>&3)
 
     ROOT_DIR="${ROOT_DIR%/}"
