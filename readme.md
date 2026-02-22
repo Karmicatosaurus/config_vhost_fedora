@@ -2,7 +2,7 @@
 
 ### Add Virtualhost
 
-![Menu](http://dev.karmicat.fr/artsys/images/vhost_ajout_menu.png)
+![Menu principal](http://dev.karmicat.fr/artsys/images/vhost_ajout_menu.png)
 
 ![Nom du projet](http://dev.karmicat.fr/artsys/images/vhost_ajout_nom.png)
 
