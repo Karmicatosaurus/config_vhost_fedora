@@ -2,6 +2,22 @@
 
 set -e
 
+function menu() {
+    CHOIX=$(whiptail --title "Config VHOST" --menu "Que voulez vous faire ?" 12 40 5 "ajout" "Ajouter un projet" "supprime" "Supprimer un projet" "Quitter" "Quitter"  3>&1 1>&2 2>&3)
+
+    case "$CHOIX" in
+        "ajout")
+            AJOUT=true
+            ;;
+        "supprime")
+            SUPPRIME=true
+            ;;
+        "quitter")
+            exit 1
+            ;;
+    esac 
+}
+
 function message() {
     whiptail --title "Config VHOST" --msgbox "$1" 8 40
     exit 1
@@ -12,16 +28,7 @@ SUPPRIME=false
 USER="$SUDO_USER"
 SSL_DIR="/etc/httpd/ssl"
 
-CHOIX=$(whiptail --title "Config VHOST" --menu "Que voulez vous faire ?" 12 40 5 "ajout" "Ajouter un projet" "supprime" "Supprimer un projet" 3>&1 1>&2 2>&3)
-
-case "$CHOIX" in
-    "ajout")
-        AJOUT=true
-        ;;
-    "supprime")
-        SUPPRIME=true
-        ;;
-esac 
+menu
 
 if [ "$AJOUT" == "true" ]; then
 
@@ -101,7 +108,9 @@ EOF
     Dossier de publication : $PUB_DIR
     Accés HTTP : http://$DOMAIN
     Accés HTTPS : https://$DOMAIN
-    Redirection HTTP → HTTPS activée" 11 60    
+    Redirection HTTP → HTTPS activée" 11 60   
+
+    menu
 
 elif [ "$SUPPRIME" == "true" ]; then
    
@@ -137,4 +146,6 @@ elif [ "$SUPPRIME" == "true" ]; then
     rm -vRf $PUB_DIR
 
     message "Le projet ${DOMAIN} a bien été supprimé"
+
+    menu
 fi
