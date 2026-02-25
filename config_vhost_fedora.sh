@@ -6,6 +6,10 @@ source ./_tui.sh
 source ./_ssl.sh
 source ./_vhost.sh
 
+if [ "$EUID" -ne 0 ]; then
+    msgbox "Erreur" "Le script doit être lancé avec sudo"
+fi
+
 UTILISATEUR="${SUDO_USER}"
 DOSSIER_CFG_HTTPD=$(httpd -S | grep ServerRoot | awk '{print $2}' | tr -d '"')
 DOSSIER_CFG_VHOSTS=${DOSSIER_CFG_HTTPD}"/conf.d"
