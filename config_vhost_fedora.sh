@@ -21,46 +21,51 @@ TLD_DOMAINE="dev"
 # Appel du menu princial
 menu_demarrage
 
-if [ ${AJOUT} == true ]; then
+case "${CHOIX}" in
+    "ajout")
+        NOM_VHOST=$(whiptail --title "Configuration hôte virtuel" --inputbox "Nom de l'hôte virtuel" 8 40 3>&1 1>&2 2>&3)
 
-    NOM_VHOST=$(whiptail --title "Configuration hôte virtuel" --inputbox "Nom de l'hôte virtuel" 8 40 3>&1 1>&2 2>&3)
+        if [[ -z "${NOM_VHOST}" ]]; then
+            msgbox "Erreur" "Il manque le nom de l'hôte virtuel"
+        fi
 
-    if [[ -z "${NOM_VHOST}" ]]; then
-        msgbox "Erreur" "Il manque le nom de l'hôte virtuel"
-    fi
+        TLD_VHOST=$(whiptail --title "Configuration hôte virtuel" --inputbox "TLD de l'hôte virtuel" 8 40 ${TLD_DOMAINE} 3>&1 1>&2 2>&3)
 
-    TLD_VHOST=$(whiptail --title "Configuration hôte virtuel" --inputbox "TLD de l'hôte virtuel" 8 40 ${TLD_DOMAINE} 3>&1 1>&2 2>&3)
+        if [[ -z "${TLD_VHOST}" ]]; then
+            message "Il manque le TLD de l'hôte virtuel"
+        fi
 
-    if [[ -z "${TLD_VHOST}" ]]; then
-        message "Il manque le TLD de l'hôte virtuel"
-    fi
+        DOSSIER_RACINE=$(whiptail --title "Configuration hôte virtuel" --inputbox "Dossier racine" 8 40 ${DOSSIER_RACINE_WEB} 3>&1 1>&2 2>&3)
 
-    DOSSIER_RACINE=$(whiptail --title "Configuration hôte virtuel" --inputbox "Dossier racine" 8 40 ${DOSSIER_RACINE_WEB} 3>&1 1>&2 2>&3)
+        if [[ -z "$DOSSIER_RACINE" ]]; then
+            DOSSIER_RACINE=${DOSSIER_RACINE_WEB}
+        fi
 
-    if [[ -z "$DOSSIER_RACINE" ]]; then
-        DOSSIER_RACINE=${DOSSIER_RACINE_WEB}
-    fi
+        DOSSIER_RACINE="${DOSSIER_RACINE%/}"
+        TLD_VHOST="${TLD_VHOST/#./}"
 
-    DOSSIER_RACINE="${DOSSIER_RACINE%/}"
-    TLD_VHOST="${TLD_VHOST/#./}"
+        NOM_DOMAINE=${NOM_VHOST}.${TLD_VHOST}
+        DOSSIER_PUBLICATION=${DOSSIER_RACINE}/${NOM_VHOST}
 
-    NOM_DOMAINE=${NOM_VHOST}.${TLD_VHOST}
-    DOSSIER_PUBLICATION=${DOSSIER_RACINE}/${NOM_VHOST}
+        if httpd -S 2>/dev/null | grep -q "namevhost ${NOM_VHOST}"; then
+            msgbox "Erreur" "L'hôte virtuel ${NOM_VHOST} existe déjà"
+        fi
 
-    if httpd -S 2>/dev/null | grep -q "namevhost ${NOM_VHOST}"; then
-        msgbox "Erreur" "L'hôte virtuel ${NOM_VHOST} existe déjà"
-    fi
+        if [[ -d "${DOSSIER_PUBLICATION}" ]]; then
+            msgbox "Erreur" "Le dossier de l'hôte virtuel existe déjà"
+        fi
 
-    if [[ -d "${DOSSIER_PUBLICATION}" ]]; then
-        msgbox "Erreur" "Le dossier de l'hôte virtuel existe déjà"
-    fi
+        creation_certificat_ssl
+        creation_virtualhost
 
-    creation_certificat_ssl
+        menu_demarrage
+        ;;
+    "supprime")
+        suppression_virtualhost
 
-    creation_virtualhost
-
-elif [ ${SUPPRIME} == true ]; then
-
-    suppression_virtualhost
-
-fi
+        menu_demarrage
+        ;;
+    "quitter")
+        exit 1
+        ;;
+esac
