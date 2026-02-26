@@ -9,22 +9,7 @@ BLANC="\033[0m"
 
 function menu_demarrage() 
 {
-    AJOUT=false
-    SUPPRIME=false
-    
     CHOIX=$(whiptail --title "Config VHOST" --menu "Que voulez vous faire ?" 12 40 5 "ajout" "Ajouter un projet" "supprime" "Supprimer un projet" "quitter" "Quitter"  3>&1 1>&2 2>&3)
-
-    case "${CHOIX}" in
-        "ajout")
-            AJOUT=true
-            ;;
-        "supprime")
-            SUPPRIME=true
-            ;;
-        "quitter")
-            exit 1
-            ;;
-    esac
 }
 
 function msgbox()
