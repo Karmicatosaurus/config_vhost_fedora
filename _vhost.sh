@@ -86,8 +86,11 @@ function suppression_virtualhost
     rm -f ${DOSSIER_SSL_HTTPD}/${NOM_VHOST}*
     rm -f /etc/pki/ca-trust/source/${NOM_VHOST}*
 
-    message "info" "Suppression dossier ${DOSSIER_PUBLICATION}"
-    rm -vRf ${DOSSIER_PUBLICATION}
+    message "info" "Suppression sécurisée du dossier ${DOSSIER_PUBLICATION}"
+
+    find ${DOSSIER_PUBLICATION} -type f -name "*.*" -exec shred -uzn8 {} \;
+
+    srm -Gr ${DOSSIER_PUBLICATION}
 
     msgbox "Opération terminée" "L'hôte virtuel ${NOM_VHOST} a bien été supprimé"
 
