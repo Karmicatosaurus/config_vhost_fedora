@@ -4,7 +4,7 @@ set -e
 
 function creation_certificat_ssl()
 {
-    DOSSIER_CRT_CA="/home/${UTILISATEUR}/.local/share/HttpCerts"
+    DOSSIER_CRT_CA="/home/${UTILISATEUR}/Dev/HttpCerts"
 
     if [[ ! -d "${DOSSIER_CRT_CA}" ]]; then
         message "info" "Création du dossier ${DOSSIER_CRT_CA}"
